@@ -1,0 +1,7 @@
+spreadspace_cancel.settings_form:
+  path: '/admin/config/system/contract-cancel'
+  defaults:
+    _title: 'Contract cancel settings'
+    _form: 'Drupal\spreadspace_cancel\Form\SettingsForm'
+  requirements:
+    _permission: 'administer site configuration'

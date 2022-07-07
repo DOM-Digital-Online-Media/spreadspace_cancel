@@ -1,0 +1,9 @@
+{
+    "name": "dom-digital-online-media/spreadspace_cancel",
+    "type": "drupal-module",
+    "description": "User cancellation and related functionality.",
+    "keywords": ["Drupal"],
+    "require": {
+        "fpdf/fpdf": "^1.84"
+    }
+}

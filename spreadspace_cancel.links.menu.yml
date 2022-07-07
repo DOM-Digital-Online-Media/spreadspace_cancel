@@ -1,0 +1,6 @@
+spreadspace_cancel.settings_form:
+  title: Contract cancel settings
+  description: Configure contract cancellation functionality.
+  parent: system.admin_config_system
+  route_name: spreadspace_cancel.settings_form
+  weight: 10

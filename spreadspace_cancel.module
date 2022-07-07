@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Spreadspace cancel module.
+ */
+
+const SPREADSPACE_CANCEL_FILES_STATE = 'spreadspace_cancel_fids_state';
+
+/**
+ * Implements hook_mail().
+ */
+function spreadspace_cancel_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'contract_cancel':
+      $config = \Drupal::config('spreadspace_cancel.settings');
+      $message['subject'] = $config->get('email_subject');
+      $message['body'][] = $config->get('email_body');
+      break;
+
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function spreadspace_cancel_cron() {
+  $request_time = \Drupal::time()->getRequestTime();
+  $previous = \Drupal::state()->get('spreadspace_cancel_file_cron', 0);
+  $interval = 60 * 60 * 24;
+
+  if ($previous < ($request_time - $interval)) {
+    $fids = \Drupal::state()->get(SPREADSPACE_CANCEL_FILES_STATE, []);
+    if (empty($fids)) {
+      return;
+    }
+
+    // Check pdfs older than 24 hours and remove them.
+    $file_storage = \Drupal::entityTypeManager()->getStorage('file');
+    $files = $file_storage
+      ->getQuery()
+      ->condition('fid', $fids, 'IN')
+      ->condition('created', $request_time - $interval, '<')
+      ->execute();
+    $file_storage->delete($file_storage->loadMultiple($files));
+
+    \Drupal::state()->set(SPREADSPACE_CANCEL_FILES_STATE, array_diff($fids, $files));
+    \Drupal::state()->set('spreadspace_cancel_file_cron', $request_time);
+  }
+}
