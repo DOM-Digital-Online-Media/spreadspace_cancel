@@ -12,10 +12,19 @@ const SPREADSPACE_CANCEL_FILES_STATE = 'spreadspace_cancel_fids_state';
  */
 function spreadspace_cancel_mail($key, &$message, $params) {
   switch ($key) {
-    case 'contract_cancel':
+
+    // Email to customer requesting the cancel.
+    case 'contract_cancel_customer':
       $config = \Drupal::config('spreadspace_cancel.settings');
-      $message['subject'] = $config->get('email_subject');
+      $site_config = \Drupal::config('system.site');
+      $message['subject'] = 'Kündigungsbestätigung';
       $message['body'][] = $config->get('email_body');
+      $message['body'][] = $site_config->get('name');
+      break;
+
+    // Email copy to client.
+    case 'contract_cancel_client':
+      $message['subject'] = "Kündigung Kundennummer {$params['customer_id']}";
       break;
 
   }

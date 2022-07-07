@@ -125,6 +125,13 @@ class ContractCancelResource extends ResourceBase {
   protected $mailManager;
 
   /**
+   * The module config object.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  protected $moduleConfig;
+
+  /**
    * Constructs a Drupal\rest\Plugin\rest\resource\EntityResource object.
    *
    * @param array $configuration
@@ -154,6 +161,8 @@ class ContractCancelResource extends ResourceBase {
     $this->dateFormatter = $date_formatter;
     $this->fileRepository = $repository;
     $this->mailManager = $mail_manager;
+
+    $this->moduleConfig = $config->get('spreadspace_cancel.settings');
   }
 
   /**
@@ -189,6 +198,13 @@ class ContractCancelResource extends ResourceBase {
   public function post($data) {
     $this->validate($data);
 
+    // Abort if configuration is not yet set.
+    if (empty($this->moduleConfig->get('email'))) {
+      return new ModifiedResourceResponse([
+        'message' => 'Backend is not fully configured for the functionality.',
+      ], 500);
+    }
+
     // Generating pdf file.
     try {
       $pdf = $this->generatePDF($data);
@@ -210,14 +226,14 @@ class ContractCancelResource extends ResourceBase {
       'filename' => $pdf->getFilename(),
       'filemime' => $pdf->getMimeType(),
     ];
-    $email = $this->config->get('spreadspace_cancel.settings')->get('email');
     $this->mailManager
-      ->mail('spreadspace_cancel', 'contract_cancel', $email, 'en', [
+      ->mail('spreadspace_cancel', 'contract_cancel_customer', $data['email address'], 'en', [
         'attachments' => [$attachment],
       ]);
     $this->mailManager
-      ->mail('spreadspace_cancel', 'contract_cancel', $data['email address'], 'en', [
+      ->mail('spreadspace_cancel', 'contract_cancel_client', $this->moduleConfig->get('email'), 'en', [
         'attachments' => [$attachment],
+        'customer_id' => $data['customer ID']
       ]);
 
     $this->flood->register($this->getPluginId(), self::FLOOD_WINDOW);

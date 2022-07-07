@@ -28,12 +28,6 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['email_subject'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Cancel email subject'),
-      '#required' => TRUE,
-      '#default_value' => $this->config('spreadspace_cancel.settings')->get('email_subject'),
-    ];
     $form['email_body'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Cancel email body'),
@@ -54,7 +48,6 @@ class SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('spreadspace_cancel.settings')
-      ->set('email_subject', $form_state->getValue('email_subject'))
       ->set('email_body', $form_state->getValue('email_body'))
       ->set('email', $form_state->getValue('email'))
       ->save();
