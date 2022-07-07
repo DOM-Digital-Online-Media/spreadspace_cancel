@@ -531,14 +531,13 @@ class ContractCancelResource extends ResourceBase {
     $pdf->Ln(4);
     $max_y = max($max_y, $pdf->GetY());
 
-    $pdf->SetXY($x, $max_y);
     $pdf->SetFont(self::FONT, '', 9);
-    $this->multiCell($pdf, 170, 6, $data['reason for extraordinary termination']);
-    $pdf->Ln(0.5);
+    if (!empty($data['reason for extraordinary termination'])) {
+      $pdf->SetXY($x, $max_y);
+      $this->multiCell($pdf, 170, 6, $data['reason for extraordinary termination']);
+      $pdf->Ln(0.5);
+    }
     $max_y = max($max_y, $pdf->GetY());
-
-    // Border for tenth row.
-    $pdf->Line($x, $max_y, $x + 170, $max_y);
 
     // Borders around the table.
     $pdf->SetLineWidth(0.4);
