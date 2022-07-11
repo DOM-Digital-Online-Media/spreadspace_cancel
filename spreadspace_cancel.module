@@ -15,15 +15,16 @@ function spreadspace_cancel_mail($key, &$message, $params) {
 
     // Email to customer requesting the cancel.
     case 'contract_cancel_customer':
-      $config = \Drupal::config('spreadspace_cancel.settings');
       $site_config = \Drupal::config('system.site');
+      $message['headers']['From'] = $params['sender'] ?? $message['headers']['From'];
       $message['subject'] = 'Kündigungsbestätigung';
-      $message['body'][] = $config->get('email_body');
+      $message['body'][] = $params['body'];
       $message['body'][] = $site_config->get('name');
       break;
 
     // Email copy to client.
     case 'contract_cancel_client':
+      $message['headers']['From'] = $params['sender'] ?? $message['headers']['From'];
       $message['subject'] = "Kündigung Kundennummer {$params['customer_id']}";
       break;
 
@@ -51,7 +52,12 @@ function spreadspace_cancel_cron() {
       ->condition('fid', $fids, 'IN')
       ->condition('created', $request_time - $interval, '<')
       ->execute();
-    $file_storage->delete($file_storage->loadMultiple($files));
+    /** @var \Drupal\file\FileInterface $file */
+    foreach ($file_storage->loadMultiple($files) as $file) {
+      $dir_uri = rtrim(str_replace($file->getFilename(), '', $file->getFileUri()), '/');
+      $file->delete();
+      \Drupal::service('file_system')->rmdir($dir_uri);
+    }
 
     \Drupal::state()->set(SPREADSPACE_CANCEL_FILES_STATE, array_diff($fids, $files));
     \Drupal::state()->set('spreadspace_cancel_file_cron', $request_time);

@@ -69,6 +69,13 @@ class ContractCancelResource extends ResourceBase {
   const MIN_HEIGHT = 3.8;
 
   /**
+   * Client id passed with request data.
+   *
+   * @var string
+   */
+  protected $client;
+
+  /**
    * The config factory service.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
@@ -145,11 +152,21 @@ class ContractCancelResource extends ResourceBase {
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger instance.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   * @param \Drupal\file\FileRepositoryInterface $file_repository
+   *   The config factory service.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
    * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    * @param \Drupal\Core\Flood\FloodInterface $flood
-   * @param \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator
+   *   The flood service.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
+   * @param \Drupal\file\FileRepositoryInterface $repository
+   *   The file repository service.
+   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   *   The mail manager service.
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, array $serializer_formats, LoggerInterface $logger, ConfigFactoryInterface $config, FileSystemInterface $file_system, StateInterface $state, FloodInterface $flood, TimeInterface $time, DateFormatterInterface $date_formatter, FileRepositoryInterface $repository, MailManagerInterface $mail_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $serializer_formats, $logger);
@@ -198,8 +215,11 @@ class ContractCancelResource extends ResourceBase {
   public function post($data) {
     $this->validate($data);
 
+    // Get client from request if set.
+    $this->client = $data['client'] ?? '';
+
     // Abort if configuration is not yet set.
-    if (empty($this->moduleConfig->get('email'))) {
+    if (empty($this->getConfig('email'))) {
       return new ModifiedResourceResponse([
         'message' => 'Backend is not fully configured for the functionality.',
       ], 500);
@@ -226,14 +246,18 @@ class ContractCancelResource extends ResourceBase {
       'filename' => $pdf->getFilename(),
       'filemime' => $pdf->getMimeType(),
     ];
+    $sender = "{$this->getConfig('email_from_name')} <{$this->getConfig('email_from')}>";
     $this->mailManager
       ->mail('spreadspace_cancel', 'contract_cancel_customer', $data['email address'], 'en', [
         'attachments' => [$attachment],
+        'sender' => $sender,
+        'body' => $this->getConfig('email_body'),
       ]);
     $this->mailManager
-      ->mail('spreadspace_cancel', 'contract_cancel_client', $this->moduleConfig->get('email'), 'en', [
+      ->mail('spreadspace_cancel', 'contract_cancel_client', $this->getConfig('email'), 'en', [
         'attachments' => [$attachment],
-        'customer_id' => $data['customer ID']
+        'customer_id' => $data['customer ID'],
+        'sender' => $sender,
       ]);
 
     $this->flood->register($this->getPluginId(), self::FLOOD_WINDOW);
@@ -290,7 +314,7 @@ class ContractCancelResource extends ResourceBase {
     // Header text in box.
     $heading =  new FormattableMarkup("Diese Kündigung wurde am @date um @time Uhr durch Betätigung der Schaltfläche „jetzt kündigen“ an die Telekom Deutschland GmbH gesendet. Nach Eingang erhalten Sie eine automatische Eingangsbestätigung.", [
       '@date' => $this->dateFormatter->format($this->time->getRequestTime(), 'custom', 'd/m/Y'),
-      '@time' => $this->dateFormatter->format($this->time->getRequestTime(), 'custom', 'h:i:s'),
+      '@time' => $this->dateFormatter->format($this->time->getRequestTime(), 'custom', 'H:i'),
     ]);
     $pdf->SetTextColor(254, 0, 0);
     $pdf->SetFont(self::FONT, 'bu', 10);
@@ -309,7 +333,7 @@ class ContractCancelResource extends ResourceBase {
     $pdf->SetTextColor(0, 0, 0);
     $pdf->SetFont(self::FONT, '', 9);
     $pdf->Ln(6);
-    $pdf->Write(5, $this->prepareText('Über diese Seite können Sie Ihren Vertrag mit der Telekom Deutschland GmbH für die Marke NORMA connect kündigen. Bitte tragen Sie dafür nachfolgend die notwendigen Angaben ein.'));
+    $pdf->Write(5, $this->prepareText("Über diese Seite können Sie Ihren Vertrag mit der Telekom Deutschland GmbH für die Marke {$this->getConfig('email_from_name')} kündigen. Bitte tragen Sie dafür nachfolgend die notwendigen Angaben ein."));
     $pdf->Ln(6);
 
     // Set borders width and get coordinates of start of table.
@@ -411,7 +435,7 @@ class ContractCancelResource extends ResourceBase {
 
     // Fifth row with a question.
     $pdf->SetXY($x, $y);
-    $pdf->MultiCell(170, 5, $this->prepareText('Welchen Vertrag oder welche Verträge mit der Telekom Deutschland GmbH (Marke NORMA connect) möchten Sie kündigen?'), 0, 'C');
+    $pdf->MultiCell(170, 5, $this->prepareText("Welchen Vertrag oder welche Verträge mit der Telekom Deutschland GmbH (Marke {$this->getConfig('email_from_name')}) möchten Sie kündigen?"), 0, 'C');
     $max_y = max($max_y, $pdf->GetY());
 
     // Border for fifth row.
@@ -475,7 +499,7 @@ class ContractCancelResource extends ResourceBase {
     $pdf->MultiCell(50, 10, $this->prepareText('Nächstmöglicher Zeitpunkt'), 0, 'R');
     $max_y = max($max_y, $pdf->GetY());
     $pdf->SetLineWidth(0.4);
-    $checkbox_x = $x + 35 + 50 + 35 + 1;
+    $checkbox_x = $x + 35 + 50 + 35 + 2.5;
     $checkbox_y = $y + 2.5;
     $pdf->Rect($checkbox_x, $checkbox_y, 5, 5);
     if (!empty($data['terminate on next possible date'])) {
@@ -599,6 +623,20 @@ class ContractCancelResource extends ResourceBase {
     $lines = ceil($pdf->GetStringWidth($text) / $w);
     $height = max(self::MIN_HEIGHT, floor($h / $lines));
     $pdf->MultiCell($w, $height, $text, $border, $align, $fill);
+  }
+
+  /**
+   * Returns config data based on client.
+   *
+   * @param string $key
+   *   Config key.
+   *
+   * @return mixed
+   *   Config value.
+   */
+  protected function getConfig(string $key) {
+    return $this->moduleConfig->get("clients.{$this->client}.{$key}")
+      ?? $this->moduleConfig->get($key);
   }
 
 }
