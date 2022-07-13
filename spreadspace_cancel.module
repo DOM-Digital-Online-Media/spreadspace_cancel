@@ -15,11 +15,9 @@ function spreadspace_cancel_mail($key, &$message, $params) {
 
     // Email to customer requesting the cancel.
     case 'contract_cancel_customer':
-      $site_config = \Drupal::config('system.site');
       $message['headers']['From'] = $params['sender'] ?? $message['headers']['From'];
       $message['subject'] = 'Kündigungsbestätigung';
       $message['body'][] = $params['body'];
-      $message['body'][] = $site_config->get('name');
       break;
 
     // Email copy to client.
