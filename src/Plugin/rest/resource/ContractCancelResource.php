@@ -246,18 +246,19 @@ class ContractCancelResource extends ResourceBase {
       'filename' => $pdf->getFilename(),
       'filemime' => $pdf->getMimeType(),
     ];
-    $sender = "{$this->getConfig('email_from_name')} <{$this->getConfig('email_from')}>";
     $this->mailManager
       ->mail('spreadspace_cancel', 'contract_cancel_customer', $data['email address'], 'en', [
         'attachments' => [$attachment],
-        'sender' => $sender,
+        'sender' => $this->getConfig('email_from'),
+        'sender_name' => $this->getConfig('email_from_name'),
         'body' => $this->getConfig('email_body'),
       ]);
     $this->mailManager
       ->mail('spreadspace_cancel', 'contract_cancel_client', $this->getConfig('email'), 'en', [
         'attachments' => [$attachment],
         'customer_id' => $data['customer ID'],
-        'sender' => $sender,
+        'sender' => $this->getConfig('email_from'),
+        'sender_name' => $this->getConfig('email_from_name'),
       ]);
 
     $this->flood->register($this->getPluginId(), self::FLOOD_WINDOW);

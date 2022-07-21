@@ -11,21 +11,29 @@ const SPREADSPACE_CANCEL_FILES_STATE = 'spreadspace_cancel_fids_state';
  * Implements hook_mail().
  */
 function spreadspace_cancel_mail($key, &$message, $params) {
+  $cancel_mail = FALSE;
   switch ($key) {
 
     // Email to customer requesting the cancel.
     case 'contract_cancel_customer':
-      $message['headers']['From'] = $params['sender'] ?? $message['headers']['From'];
+      $cancel_mail = TRUE;
       $message['subject'] = 'Kündigungsbestätigung';
       $message['body'][] = $params['body'];
       break;
 
     // Email copy to client.
     case 'contract_cancel_client':
-      $message['headers']['From'] = $params['sender'] ?? $message['headers']['From'];
+      $cancel_mail = TRUE;
       $message['subject'] = "Kündigung Kundennummer {$params['customer_id']}";
       break;
 
+  }
+
+  if ($cancel_mail && !empty($params['sender']) && !empty($params['sender_name'])) {
+    $full_sender = "{$params['sender_name']} <{$params['sender']}>";
+
+    $message['from'] = $message['headers']['From'] = $message['headers']['Sender'] = $full_sender;
+    $message['headers']['Return-Path'] = $params['sender'];
   }
 }
 
