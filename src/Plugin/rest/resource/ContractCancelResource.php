@@ -338,7 +338,7 @@ class ContractCancelResource extends ResourceBase {
     }
 
     if (!$this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW)) {
-      //throw new BadRequestHttpException($this->t('Too much requests.'));
+      throw new BadRequestHttpException($this->t('Too much requests.'));
     }
   }
 
