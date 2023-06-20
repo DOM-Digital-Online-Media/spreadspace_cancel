@@ -221,52 +221,91 @@ class ContractCancelResource extends ResourceBase {
     // Abort if configuration is not yet set.
     if (empty($this->getConfig('email'))) {
       return new ModifiedResourceResponse([
-        'message' => 'Backend is not fully configured for the functionality.',
+        'message' => $this->t('Backend is not fully configured for the functionality.'),
       ], 500);
     }
 
-    // Generating pdf file.
-    try {
-      $pdf = $this->generatePDF($data);
-    }
-    catch (\Exception $e) {
-      $this->logger
-        ->error('There was an issue with generating pdf file: ' . implode(' ', [
-          $e->getCode(),
-          $e->getMessage()
-        ]));
-      return new ModifiedResourceResponse([
-        'message' => 'There was an issue with contract cancellation formular generation.',
-      ], 500);
-    }
+    if ($this->client == 'share') {
+      $build = [
+        '#theme' => 'spreadspace_cancel_share_email_customer',
+        '#data' => $data,
+      ];
 
-    // Send 2 emails to user and other email specified in configs.
-    $attachment = [
-      'filepath' => $pdf->getFileUri(),
-      'filename' => $pdf->getFilename(),
-      'filemime' => $pdf->getMimeType(),
-    ];
-    $this->mailManager
-      ->mail('spreadspace_cancel', 'contract_cancel_customer', $data['email address'], 'en', [
-        'attachments' => [$attachment],
-        'sender' => $this->getConfig('email_from'),
-        'sender_name' => $this->getConfig('email_from_name'),
-        'body' => $this->getConfig('email_body'),
-      ]);
-    $this->mailManager
-      ->mail('spreadspace_cancel', 'contract_cancel_client', $this->getConfig('email'), 'en', [
-        'attachments' => [$attachment],
-        'customer_id' => $data['customer ID'],
-        'sender' => $this->getConfig('email_from'),
-        'sender_name' => $this->getConfig('email_from_name'),
-      ]);
+      $message_body = \Drupal::service('renderer')->renderPlain($build);
+
+      $build = [
+        '#theme' => 'spreadspace_cancel_share_email_service_center',
+        '#data' => $data,
+      ];
+
+      $service_center_body = \Drupal::service('renderer')->renderPlain($build);
+
+      $this->mailManager
+        ->mail('spreadspace_cancel', 'share_contract_cancel_customer', $data['email address'], 'en', [
+          'attachments' => [],
+          'sender' => $this->getConfig('email_from'),
+          'sender_name' => $this->getConfig('email_from_name'),
+          'body' => $message_body,
+        ]);
+      $this->mailManager
+        ->mail('spreadspace_cancel', 'share_contract_cancel_service_center', $this->getConfig('email'), 'en', [
+          'attachments' => [],
+          'customer_id' => $data['customer ID'],
+          'sender' => $this->getConfig('email_from'),
+          'sender_name' => $this->getConfig('email_from_name'),
+          'body' => $service_center_body,
+        ]);
+
+      $response = [
+        'result' => $this->t('Cancelation mail was sent successfully.'),
+      ];
+    }
+    else {
+      // Generating pdf file.
+      try {
+        $pdf = $this->generatePDF($data);
+      }
+      catch (\Exception $e) {
+        $this->logger
+          ->error('There was an issue with generating pdf file: ' . implode(' ', [
+              $e->getCode(),
+              $e->getMessage()
+            ]));
+        return new ModifiedResourceResponse([
+          'message' => $this->t('There was an issue with contract cancellation formular generation.'),
+        ], 500);
+      }
+
+      // Send 2 emails to user and other email specified in configs.
+      $attachment = [
+        'filepath' => $pdf->getFileUri(),
+        'filename' => $pdf->getFilename(),
+        'filemime' => $pdf->getMimeType(),
+      ];
+      $this->mailManager
+        ->mail('spreadspace_cancel', 'contract_cancel_customer', $data['email address'], 'en', [
+          'attachments' => [$attachment],
+          'sender' => $this->getConfig('email_from'),
+          'sender_name' => $this->getConfig('email_from_name'),
+          'body' => $this->getConfig('email_body'),
+        ]);
+      $this->mailManager
+        ->mail('spreadspace_cancel', 'contract_cancel_client', $this->getConfig('email'), 'en', [
+          'attachments' => [$attachment],
+          'customer_id' => $data['customer ID'],
+          'sender' => $this->getConfig('email_from'),
+          'sender_name' => $this->getConfig('email_from_name'),
+        ]);
+
+      $response = [
+        'url' => $pdf->createFileUrl(FALSE),
+      ];
+    }
 
     $this->flood->register($this->getPluginId(), self::FLOOD_WINDOW);
 
     // Return the pdf url in response.
-    return new ModifiedResourceResponse([
-      'url' => $pdf->createFileUrl(FALSE),
-    ], 200);
+    return new ModifiedResourceResponse($response, 200);
   }
 
   /**
@@ -279,22 +318,27 @@ class ContractCancelResource extends ResourceBase {
    */
   protected function validate(array $data) {
     if (!is_array($data) || count($data) == 0) {
-      throw new BadRequestHttpException('No data received.');
+      throw new BadRequestHttpException($this->t('No data received.'));
     }
 
     foreach (self::REQUIRED_FIELDS as $field_name) {
       if (empty($data[$field_name])) {
-        throw new BadRequestHttpException($field_name . ' is required.');
+        //        throw new BadRequestHttpException($field_name . ' is required.');
+        throw new BadRequestHttpException($this->t('@field_name is required.', ['@field_name' => $field_name]));
       }
     }
 
+    if ($data['client'] == 'share' && (!isset($data['iban']) || empty($data['iban']))) {
+      throw new BadRequestHttpException($this->t('Iban is required.'));
+    }
+
     if (!empty($data['reason for extraordinary termination'])
-  && strlen($data['reason for extraordinary termination']) > 500) {
-      throw new BadRequestHttpException('Reason for extraordinary termination should not exceed 500 characters limit.');
+      && strlen($data['reason for extraordinary termination']) > 500) {
+      throw new BadRequestHttpException($this->t('Reason for extraordinary termination should not exceed 500 characters limit.'));
     }
 
     if (!$this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW)) {
-      throw new BadRequestHttpException('Too much requests.');
+      throw new BadRequestHttpException($this->t('Too much requests.'));
     }
   }
 

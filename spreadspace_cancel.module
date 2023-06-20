@@ -69,3 +69,21 @@ function spreadspace_cancel_cron() {
     \Drupal::state()->set('spreadspace_cancel_file_cron', $request_time);
   }
 }
+
+/**
+ * Implements hook_theme().
+ */
+function spreadspace_cancel_theme($existing, $type, $theme, $path) {
+  return [
+    'spreadspace_cancel_share_email_customer' => [
+      'variables' => [
+        'data' => [],
+      ],
+    ],
+    'spreadspace_cancel_share_email_service_center' => [
+      'variables' => [
+        'data' => [],
+      ],
+    ],
+  ];
+}
