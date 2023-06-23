@@ -213,10 +213,10 @@ class ContractCancelResource extends ResourceBase {
    *   The HTTP response object.
    */
   public function post($data) {
-    $this->validate($data);
-
     // Get client from request if set.
     $this->client = $data['client'] ?? '';
+
+    $this->validate($data);
 
     // Abort if configuration is not yet set.
     if (empty($this->getConfig('email'))) {
@@ -337,7 +337,9 @@ class ContractCancelResource extends ResourceBase {
       throw new BadRequestHttpException($this->t('Reason for extraordinary termination should not exceed 500 characters limit.'));
     }
 
-    if (!$this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW)) {
+    $disable_flood_protection = $this->getConfig('disable_flood_protection') ?? FALSE;
+
+    if (!$disable_flood_protection && !$this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW)) {
       throw new BadRequestHttpException($this->t('Too much requests.'));
     }
   }

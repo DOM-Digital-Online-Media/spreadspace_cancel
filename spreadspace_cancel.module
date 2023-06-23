@@ -27,6 +27,20 @@ function spreadspace_cancel_mail($key, &$message, $params) {
       $message['subject'] = "Kündigung Kundennummer {$params['customer_id']}";
       break;
 
+    // Email to share customer requesting the cancel.
+    case 'share_contract_cancel_customer':
+      $cancel_mail = TRUE;
+      $message['subject'] = 'Kündigungsbestätigung';
+      $message['body'][] = $params['body'];
+      break;
+
+    // Email copy to share client.
+    case 'share_contract_cancel_service_center':
+      $cancel_mail = TRUE;
+      $message['subject'] = "Kündigung Kundennummer {$params['customer_id']}";
+      $message['body'][] = $params['body'];
+      break;
+
   }
 
   if ($cancel_mail && !empty($params['sender']) && !empty($params['sender_name'])) {
