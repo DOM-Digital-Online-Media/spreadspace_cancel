@@ -292,7 +292,7 @@ class ContractCancelResource extends ResourceBase {
       $this->mailManager
         ->mail('spreadspace_cancel', 'contract_cancel_client', $this->getConfig('email'), 'en', [
           'attachments' => [$attachment],
-          'customer_id' => $data['customer ID'],
+          'customer_id' => $data['client'] == 'norma' ? $data['mobile phone number'] : $data['customer ID'],
           'sender' => $this->getConfig('email_from'),
           'sender_name' => $this->getConfig('email_from_name'),
         ]);
@@ -335,6 +335,10 @@ class ContractCancelResource extends ResourceBase {
     if (!empty($data['reason for extraordinary termination'])
       && strlen($data['reason for extraordinary termination']) > 500) {
       throw new BadRequestHttpException($this->t('Reason for extraordinary termination should not exceed 500 characters limit.'));
+    }
+
+    if ($data['client'] == 'norma' && !isset($data['customer ID']) && !isset($data['sim card number'])) {
+      throw new BadRequestHttpException($this->t('At least one of those fields "customer ID" or "sim card number" must be present in the request.'));
     }
 
     $disable_flood_protection = $this->getConfig('disable_flood_protection') ?? FALSE;
@@ -491,8 +495,17 @@ class ContractCancelResource extends ResourceBase {
     $y = $max_y;
 
     // Sixth row with id and phone number.
+    if ($data['client'] == 'norma' && isset($data['sim card number'])) {
+      $pdf->SetXY($x, $y);
+      $this->multiCell($pdf, 35, 10, $data['sim card number']);
+    }
+
     $pdf->SetXY($x + 35, $y);
-    $this->multiCell($pdf, 50, 10, $data['customer ID']);
+
+    if (isset($data['customer ID'])) {
+      $this->multiCell($pdf, 50, 10, $data['customer ID']);
+    }
+
     $max_y = max($max_y, $pdf->GetY());
 
     $pdf->SetXY($x + 35 + 50, $y);
@@ -508,6 +521,11 @@ class ContractCancelResource extends ResourceBase {
     $pdf->SetFont(self::FONT, '', 8);
 
     // Seventh row with id and phone number labels.
+    if ($data['client'] == 'norma') {
+      $pdf->SetXY($x, $y);
+      $pdf->MultiCell(35, 5, $this->prepareText('Sim-Kartennummer'));
+    }
+
     $pdf->SetXY($x + 35, $y);
     $pdf->MultiCell(50, 5, $this->prepareText('Kundennummer*'));
     $max_y = max($max_y, $pdf->GetY());
@@ -621,7 +639,7 @@ class ContractCancelResource extends ResourceBase {
 
     $destination = 'public://pdf/' . bin2hex(random_bytes(4));
     $this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY);
-    $destination .= '/Kündigungsbestätigung.pdf';
+    $destination .= '/Kündigungsbestätigung' . ($data['client'] == 'norma' ? '_' . $data['mobile phone number'] : '') . '.pdf';
     $file = $this->fileRepository->writeData($pdf->Output('s'), $destination);
 
     // Store file ids to clean up later.
