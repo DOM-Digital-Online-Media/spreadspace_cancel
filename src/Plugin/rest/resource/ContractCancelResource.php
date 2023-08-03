@@ -282,6 +282,15 @@ class ContractCancelResource extends ResourceBase {
         'filename' => $pdf->getFilename(),
         'filemime' => $pdf->getMimeType(),
       ];
+
+      $body = '';
+
+      if (in_array($data['client'], ['norma', 'kaufland'])) {
+        foreach ($data as $data_key => $data_value) {
+          $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, $data_key, $data_value);
+        }
+      }
+
       $this->mailManager
         ->mail('spreadspace_cancel', 'contract_cancel_customer', $data['email address'], 'en', [
           'attachments' => [$attachment],
@@ -295,6 +304,7 @@ class ContractCancelResource extends ResourceBase {
           'customer_id' => in_array($data['client'], ['norma', 'kaufland']) ? $data['mobile phone number'] : $data['customer ID'],
           'sender' => $this->getConfig('email_from'),
           'sender_name' => $this->getConfig('email_from_name'),
+          'body' => $body,
         ]);
 
       $response = [
@@ -325,7 +335,7 @@ class ContractCancelResource extends ResourceBase {
       if (in_array($data['client'], ['norma', 'kaufland']) && $field_name == 'customer ID') {
         continue;
       }
-      
+
       if (empty($data[$field_name])) {
         //        throw new BadRequestHttpException($field_name . ' is required.');
         throw new BadRequestHttpException($this->t('@field_name is required.', ['@field_name' => $field_name]));
