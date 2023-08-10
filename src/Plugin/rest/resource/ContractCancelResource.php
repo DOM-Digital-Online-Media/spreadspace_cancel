@@ -49,6 +49,23 @@ class ContractCancelResource extends ResourceBase {
   ];
 
   /**
+   * Field titles translations for Norma/Kaufland email.
+   */
+  const NORMA_MAIL_TRANSLATIONS = [
+    'client' => 'Marke',
+    'first name' => 'Vorname',
+    'last name' => 'Nachname',
+    'email adress' => 'E-Mail Adresse',
+    'customer ID' => 'Kundennummer',
+    'sim card number' => 'SIM-Kartennummer',
+    'mobile phone number' => 'Mobilnummer',
+    'date of termination' => 'Kündigungsdatum',
+    'ordinary termination' => 'Ordentliche Kündigung',
+    'extraordinary termination' => 'Außerordentliche Kündigung',
+    'iban' => 'Iban',
+  ];
+
+  /**
    * Maximum amount of requests for user per window.
    */
   const FLOOD_THRESHOLD = 5;
@@ -285,9 +302,15 @@ class ContractCancelResource extends ResourceBase {
 
       $body = '';
 
-      if (in_array($data['client'], ['norma', 'kaufland'])) {
-        foreach ($data as $data_key => $data_value) {
-          $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, $data_key, $data_value);
+      $address = implode(' ', [$data['street'], $data['street number'], $data['zipcode'], $data['city']]);
+
+      if ($address) {
+        $body = '<p>Adresse: ' . $address . '</p>';
+      }
+
+      foreach ($data as $data_key => $data_value) {
+        if (isset(self::NORMA_MAIL_TRANSLATIONS[$data_key])) {
+          $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, self::NORMA_MAIL_TRANSLATIONS[$data_key], $data_value);
         }
       }
 
@@ -637,7 +660,7 @@ class ContractCancelResource extends ResourceBase {
     $pdf->SetFont(self::FONT, '', 9);
     if (!empty($data['reason for extraordinary termination'])) {
       $pdf->SetXY($x, $max_y);
-      $this->multiCell($pdf, 170, 6, $data['reason for extraordinary termination']);
+      $this->multiCell($pdf, 170, 6, strip_tags($data['reason for extraordinary termination']));
       $pdf->Ln(0.5);
     }
     $max_y = max($max_y, $pdf->GetY());
