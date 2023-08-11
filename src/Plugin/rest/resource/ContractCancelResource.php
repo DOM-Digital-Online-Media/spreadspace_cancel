@@ -49,23 +49,6 @@ class ContractCancelResource extends ResourceBase {
   ];
 
   /**
-   * Field titles translations for Norma/Kaufland email.
-   */
-  const NORMA_MAIL_TRANSLATIONS = [
-    'client' => 'Marke',
-    'first name' => 'Vorname',
-    'last name' => 'Nachname',
-    'email adress' => 'E-Mail Adresse',
-    'customer ID' => 'Kundennummer',
-    'sim card number' => 'SIM-Kartennummer',
-    'mobile phone number' => 'Mobilnummer',
-    'date of termination' => 'Kündigungsdatum',
-    'ordinary termination' => 'Ordentliche Kündigung',
-    'extraordinary termination' => 'Außerordentliche Kündigung',
-    'iban' => 'Iban',
-  ];
-
-  /**
    * Maximum amount of requests for user per window.
    */
   const FLOOD_THRESHOLD = 5;
@@ -305,12 +288,26 @@ class ContractCancelResource extends ResourceBase {
       $address = implode(' ', [$data['street'], $data['street number'], $data['zipcode'], $data['city']]);
 
       if ($address) {
-        $body = '<p>Adresse: ' . $address . '</p>';
+        $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, $this->t('Adresse'), $address);
       }
 
+      $translations = [
+        'first name' => $this->t('Vorname'),
+        'client' => $this->t('Marke'),
+        'last name' => $this->t('Nachname'),
+        'email adress' => $this->t('E-Mail Adresse'),
+        'customer ID' => $this->t('Kundennummer'),
+        'sim card number' => $this->t('SIM-Kartennummer'),
+        'mobile phone number' => $this->t('Mobilnummer'),
+        'date of termination' => $this->t('Kündigungsdatum'),
+        'ordinary termination' => $this->t('Ordentliche Kündigung'),
+        'extraordinary termination' => $this->t('Außerordentliche Kündigung'),
+        'iban' => $this->t('Iban'),
+      ];
+
       foreach ($data as $data_key => $data_value) {
-        if (isset(self::NORMA_MAIL_TRANSLATIONS[$data_key])) {
-          $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, self::NORMA_MAIL_TRANSLATIONS[$data_key], $data_value);
+        if (isset($translations[$data_key])) {
+          $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, $translations[$data_key], $data_value);
         }
       }
 
