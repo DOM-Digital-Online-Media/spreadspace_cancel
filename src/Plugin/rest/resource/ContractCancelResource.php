@@ -11,6 +11,7 @@ use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\rest\ModifiedResourceResponse;
@@ -32,6 +33,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * )
  */
 class ContractCancelResource extends ResourceBase {
+  use StringTranslationTrait;
 
   /**
    * Required POST data fields.
