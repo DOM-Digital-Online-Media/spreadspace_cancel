@@ -294,17 +294,17 @@ class ContractCancelResource extends ResourceBase {
       }
 
       $translations = [
-        'first name' => $this->t('Vorname'),
-        'client' => $this->t('Marke'),
-        'last name' => $this->t('Nachname'),
-        'email adress' => $this->t('E-Mail Adresse'),
-        'customer ID' => $this->t('Kundennummer'),
-        'sim card number' => $this->t('SIM-Kartennummer'),
-        'mobile phone number' => $this->t('Mobilnummer'),
-        'date of termination' => $this->t('Kündigungsdatum'),
-        'ordinary termination' => $this->t('Ordentliche Kündigung'),
-        'extraordinary termination' => $this->t('Außerordentliche Kündigung'),
-        'iban' => $this->t('Iban'),
+        'first name' => 'Vorname',
+        'client' => 'Marke',
+        'last name' => 'Nachname',
+        'email adress' => 'E-Mail Adresse',
+        'customer ID' => 'Kundennummer',
+        'sim card number' => 'SIM-Kartennummer',
+        'mobile phone number' => 'Mobilnummer',
+        'date of termination' => 'Kündigungsdatum',
+        'ordinary termination' => 'Ordentliche Kündigung',
+        'extraordinary termination' => 'Außerordentliche Kündigung',
+        'iban' => 'Iban',
       ];
 
       foreach ($data as $data_key => $data_value) {
