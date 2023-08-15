@@ -290,7 +290,7 @@ class ContractCancelResource extends ResourceBase {
       $address = implode(' ', [$data['street'], $data['street number'], $data['zipcode'], $data['city']]);
 
       if ($address) {
-        $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, $this->t('Adresse'), $address);
+        $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, 'Adresse', $address);
       }
 
       $translations = [
