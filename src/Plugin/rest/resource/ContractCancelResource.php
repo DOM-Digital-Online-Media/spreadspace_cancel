@@ -11,6 +11,7 @@ use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\rest\ModifiedResourceResponse;
@@ -32,6 +33,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * )
  */
 class ContractCancelResource extends ResourceBase {
+  use StringTranslationTrait;
 
   /**
    * Required POST data fields.
@@ -285,9 +287,29 @@ class ContractCancelResource extends ResourceBase {
 
       $body = '';
 
-      if (in_array($data['client'], ['norma', 'kaufland'])) {
-        foreach ($data as $data_key => $data_value) {
-          $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, $data_key, $data_value);
+      $address = implode(' ', [$data['street'], $data['street number'], $data['zipcode'], $data['city']]);
+
+      if ($address) {
+        $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, 'Adresse', $address);
+      }
+
+      $translations = [
+        'first name' => 'Vorname',
+        'client' => 'Marke',
+        'last name' => 'Nachname',
+        'email adress' => 'E-Mail Adresse',
+        'customer ID' => 'Kundennummer',
+        'sim card number' => 'SIM-Kartennummer',
+        'mobile phone number' => 'Mobilnummer',
+        'date of termination' => 'Kündigungsdatum',
+        'ordinary termination' => 'Ordentliche Kündigung',
+        'extraordinary termination' => 'Außerordentliche Kündigung',
+        'iban' => 'Iban',
+      ];
+
+      foreach ($data as $data_key => $data_value) {
+        if (isset($translations[$data_key])) {
+          $body .= sprintf('<p>%s: %s</p>' . PHP_EOL, $translations[$data_key], $data_value);
         }
       }
 
@@ -637,7 +659,7 @@ class ContractCancelResource extends ResourceBase {
     $pdf->SetFont(self::FONT, '', 9);
     if (!empty($data['reason for extraordinary termination'])) {
       $pdf->SetXY($x, $max_y);
-      $this->multiCell($pdf, 170, 6, $data['reason for extraordinary termination']);
+      $this->multiCell($pdf, 170, 6, strip_tags($data['reason for extraordinary termination']));
       $pdf->Ln(0.5);
     }
     $max_y = max($max_y, $pdf->GetY());
