@@ -297,14 +297,9 @@ class ContractCancelResource extends ResourceBase {
         'first name' => 'Vorname',
         'client' => 'Marke',
         'last name' => 'Nachname',
-        'email adress' => 'E-Mail Adresse',
         'customer ID' => 'Kundennummer',
         'sim card number' => 'SIM-Kartennummer',
         'mobile phone number' => 'Mobilnummer',
-        'date of termination' => 'Kündigungsdatum',
-        'ordinary termination' => 'Ordentliche Kündigung',
-        'extraordinary termination' => 'Außerordentliche Kündigung',
-        'iban' => 'Iban',
       ];
 
       foreach ($data as $data_key => $data_value) {
