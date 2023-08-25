@@ -368,7 +368,7 @@ class ContractCancelResource extends ResourceBase {
       throw new BadRequestHttpException($this->t('Reason for extraordinary termination should not exceed 500 characters limit.'));
     }
 
-    if (in_array($data['client'], ['norma', 'kaufland']) && ((!isset($data['customer ID']) && !isset($data['sim card number'])) || (empty($data['customer ID']) && empty($data['sim card number'])))) {
+    if (in_array($data['client'], ['norma', 'kaufland']) && empty($data['customer ID']) && empty($data['sim card number'])) {
       throw new BadRequestHttpException($this->t('At least one of those fields "customer ID" or "sim card number" must be present in the request.'));
     }
 
