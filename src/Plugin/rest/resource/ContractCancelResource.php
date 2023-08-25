@@ -297,14 +297,9 @@ class ContractCancelResource extends ResourceBase {
         'first name' => 'Vorname',
         'client' => 'Marke',
         'last name' => 'Nachname',
-        'email adress' => 'E-Mail Adresse',
         'customer ID' => 'Kundennummer',
         'sim card number' => 'SIM-Kartennummer',
         'mobile phone number' => 'Mobilnummer',
-        'date of termination' => 'Kündigungsdatum',
-        'ordinary termination' => 'Ordentliche Kündigung',
-        'extraordinary termination' => 'Außerordentliche Kündigung',
-        'iban' => 'Iban',
       ];
 
       foreach ($data as $data_key => $data_value) {
@@ -373,7 +368,7 @@ class ContractCancelResource extends ResourceBase {
       throw new BadRequestHttpException($this->t('Reason for extraordinary termination should not exceed 500 characters limit.'));
     }
 
-    if (in_array($data['client'], ['norma', 'kaufland']) && !isset($data['customer ID']) && !isset($data['sim card number'])) {
+    if (in_array($data['client'], ['norma', 'kaufland']) && empty($data['customer ID']) && empty($data['sim card number'])) {
       throw new BadRequestHttpException($this->t('At least one of those fields "customer ID" or "sim card number" must be present in the request.'));
     }
 
@@ -722,7 +717,7 @@ class ContractCancelResource extends ResourceBase {
   protected function multiCell(Fpdf $pdf, $w, $h, $txt, $border = 0, string $align = 'J', bool $fill = FALSE) {
     $text = $this->prepareText($txt);
     $lines = ceil($pdf->GetStringWidth($text) / $w);
-    $height = max(self::MIN_HEIGHT, floor($h / $lines));
+    $height = max(self::MIN_HEIGHT, floor($h / ($lines ? $lines : 1)));
     $pdf->MultiCell($w, $height, $text, $border, $align, $fill);
   }
 
