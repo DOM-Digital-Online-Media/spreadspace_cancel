@@ -716,8 +716,9 @@ class ContractCancelResource extends ResourceBase {
    */
   protected function multiCell(Fpdf $pdf, $w, $h, $txt, $border = 0, string $align = 'J', bool $fill = FALSE) {
     $text = $this->prepareText($txt);
-    $lines = ceil($pdf->GetStringWidth($text) / $w);
-    $height = max(self::MIN_HEIGHT, floor($h / ($lines ? $lines : 1)));
+    $text_width = $pdf->GetStringWidth($text);
+    $lines = ceil($text_width / ($w > 0 ? $w : $text_width));
+    $height = max(self::MIN_HEIGHT, floor($h / ($lines > 0 ? $lines : 1)));
     $pdf->MultiCell($w, $height, $text, $border, $align, $fill);
   }
 
