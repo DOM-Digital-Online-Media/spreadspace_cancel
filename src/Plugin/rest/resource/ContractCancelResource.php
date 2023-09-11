@@ -699,10 +699,10 @@ class ContractCancelResource extends ResourceBase {
    *
    * @param \Fpdf\Fpdf $pdf
    *   Pdf object.
-   * @param $w
-   *   Cell width.
-   * @param $h
-   *   Preferable cell height if text won't exceed one line.
+   * @param string|int $w
+   *   Cell width (should be more than 0).
+   * @param string|int $h
+   *   Preferable cell height if text won't exceed one line (should be more than 0).
    * @param $txt
    *   Text to place in cell. Will be prepared before print.
    * @param string|int $border
@@ -715,9 +715,17 @@ class ContractCancelResource extends ResourceBase {
    * @see \Fpdf\Fpdf::MultiCell()
    */
   protected function multiCell(Fpdf $pdf, $w, $h, $txt, $border = 0, string $align = 'J', bool $fill = FALSE) {
+    if ((int)$w === 0) {
+      throw new \Exception($this->t('The multiCell method doesn\'t allow cell width value less or equals to 0, it should be positive integer.'));
+    }
+
+    if ((int)$h === 0) {
+      throw new \Exception($this->t('The multiCell method doesn\'t allow cell height value less or equals to 0, it should be positive integer.'));
+    }
+
     $text = $this->prepareText($txt);
     $text_width = $pdf->GetStringWidth($text);
-    $lines = ceil($text_width / ($w > 0 ? $w : $text_width));
+    $lines = $text_width ? ceil($text_width / $w) : 1;
     $height = max(self::MIN_HEIGHT, floor($h / ($lines > 0 ? $lines : 1)));
     $pdf->MultiCell($w, $height, $text, $border, $align, $fill);
   }
