@@ -425,7 +425,7 @@ class ContractCancelResource extends ResourceBase {
     $max_y = $y;
 
     // First table row with name and surname.
-    $pdf->MultiCell(35, 10, $this->prepareText('Name*'), 0, 'L');
+    $pdf->MultiCell(35, 10, $this->prepareText('Vorname*'), 0, 'L');
     $max_y = max($max_y, $pdf->GetY());
 
     $pdf->SetXY($x + 35, $y);
@@ -433,7 +433,7 @@ class ContractCancelResource extends ResourceBase {
     $max_y = max($max_y, $pdf->GetY());
 
     $pdf->SetXY($x + 35 + 50, $y);
-    $pdf->MultiCell(35, 10, $this->prepareText('Vorname*'), 0, 'L');
+    $pdf->MultiCell(35, 10, $this->prepareText('Name*'), 0, 'L');
     $max_y = max($max_y, $pdf->GetY());
 
     $pdf->SetXY($x + 35 + 50 + 35, $y);
