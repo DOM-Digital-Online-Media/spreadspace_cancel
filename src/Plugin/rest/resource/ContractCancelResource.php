@@ -670,7 +670,7 @@ class ContractCancelResource extends ResourceBase {
 
     $destination = 'public://pdf/' . bin2hex(random_bytes(4));
     $this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY);
-    $destination .= '/Kündigungsbestätigung' . (in_array($data['client'], ['norma', 'kaufland']) ? '_' . $data['mobile phone number'] : '') . '.pdf';
+    $destination .= '/Kündigung' . (in_array($data['client'], ['norma', 'kaufland']) ? '_' . $data['mobile phone number'] : '') . '.pdf';
     $file = $this->fileRepository->writeData($pdf->Output('s'), $destination);
 
     // Store file ids to clean up later.
