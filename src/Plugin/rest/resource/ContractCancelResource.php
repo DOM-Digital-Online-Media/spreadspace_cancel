@@ -346,7 +346,7 @@ class ContractCancelResource extends ResourceBase {
       $full_url = $url->toString();
 
       $response = [
-        'url' => $full_url,
+        'url' => $full_url . '?_format=json',
       ];
     }
 
