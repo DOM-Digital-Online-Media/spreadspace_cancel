@@ -5,3 +5,10 @@ spreadspace_cancel.settings_form:
     _form: 'Drupal\spreadspace_cancel\Form\SettingsForm'
   requirements:
     _permission: 'administer site configuration'
+spreadspace_cancel.contract_download:
+  path: '/api/kuendigung-download/{uuid}'
+  defaults:
+    _plugin: 'rest:spreadspace_cancel_contract_download'
+  requirements:
+    _permission: 'access content'
+    uuid: '[0-9a-fA-F-]+'

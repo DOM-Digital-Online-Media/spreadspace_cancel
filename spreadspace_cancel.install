@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the spreadspace_cancel.
+ */
+
+/**
+ * Implements hook_update_N().
+ */
+function spreadspace_cancel_update_9001()
+{
+  $schema = \Drupal::database()->schema();
+
+  if (!$schema->tableExists('custom_module_user_agents')) {
+    $schema->createTable('custom_module_user_agents', [
+      'fields' => [
+        'id' => [
+          'type' => 'serial',
+          'not null' => TRUE,
+        ],
+        'user_agent_hash' => [
+          'type' => 'varchar',
+          'length' => 64,
+          'not null' => TRUE,
+        ],
+        'request_data' => [
+          'type' => 'blob',
+          'not null' => TRUE,
+        ],
+        'file_path' => [
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ],
+        'created' => [
+          'type' => 'int',
+          'not null' => TRUE,
+        ],
+      ],
+      'primary key' => ['id'],
+    ]);
+  }
+}

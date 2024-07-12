@@ -60,7 +60,7 @@ function spreadspace_cancel_mail($key, &$message, $params) {
 function spreadspace_cancel_cron() {
   $request_time = \Drupal::time()->getRequestTime();
   $previous = \Drupal::state()->get('spreadspace_cancel_file_cron', 0);
-  $interval = 60 * 60 * 24;
+  $interval = 60 * 10;
 
   if ($previous < ($request_time - $interval)) {
     $fids = \Drupal::state()->get(SPREADSPACE_CANCEL_FILES_STATE, []);

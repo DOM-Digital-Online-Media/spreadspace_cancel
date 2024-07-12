@@ -15,6 +15,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\rest\ModifiedResourceResponse;
+use Drupal\Core\Url;
 use Drupal\rest\Plugin\ResourceBase;
 use Fpdf\Fpdf;
 use Psr\Log\LoggerInterface;
@@ -227,6 +228,11 @@ class ContractCancelResource extends ResourceBase {
       ], 500);
     }
 
+    // Generate and store the user agent hash.
+    $user_agent = \Drupal::request()->headers->get('User-Agent');
+    $user_agent_hash = hash('sha256', $user_agent);
+    $timestamp = time();
+
     if ($this->client == 'share') {
       $build = [
         '#theme' => 'spreadspace_cancel_share_email_customer',
@@ -266,6 +272,17 @@ class ContractCancelResource extends ResourceBase {
       // Generating pdf file.
       try {
         $pdf = $this->generatePDF($data);
+
+        $pdf_uuid = $pdf->uuid();
+        // Insert data into custom_module_user_agents table
+        \Drupal::database()->insert('spreadspace_cancel_user_agents')
+        ->fields([
+          'user_agent_hash' => $user_agent_hash,
+          'request_data' => serialize($data),
+          'created' => $timestamp,
+          'file_path' => $pdf_uuid
+        ])
+        ->execute();
       }
       catch (\Exception $e) {
         $this->logger
@@ -324,8 +341,12 @@ class ContractCancelResource extends ResourceBase {
           'body' => $body,
         ]);
 
+      // Generate the full URL
+      $url = Url::fromRoute('spreadspace_cancel.contract_download', ['uuid' => $pdf_uuid], ['absolute' => TRUE]);
+      $full_url = $url->toString();
+
       $response = [
-        'url' => $pdf->createFileUrl(FALSE),
+        'url' => $full_url,
       ];
     }
 
@@ -668,7 +689,7 @@ class ContractCancelResource extends ResourceBase {
     $pdf->SetFillColor(231, 230, 230);
     $pdf->Cell(35, 10, $this->prepareText('*Pflichtangaben'), 0, 0, '', TRUE);
 
-    $destination = 'public://pdf/' . bin2hex(random_bytes(4));
+    $destination = 'private://pdf/' . bin2hex(random_bytes(4));
     $this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY);
     $destination .= '/Kündigung' . (in_array($data['client'], ['norma', 'kaufland']) ? '_' . $data['mobile phone number'] : '') . '.pdf';
     $file = $this->fileRepository->writeData($pdf->Output('s'), $destination);
