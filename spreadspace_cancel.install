@@ -12,8 +12,8 @@ function spreadspace_cancel_update_9001()
 {
   $schema = \Drupal::database()->schema();
 
-  if (!$schema->tableExists('custom_module_user_agents')) {
-    $schema->createTable('custom_module_user_agents', [
+  if (!$schema->tableExists('spreadspace_cancel_user_agents')) {
+    $schema->createTable('spreadspace_cancel_user_agents', [
       'fields' => [
         'id' => [
           'type' => 'serial',
