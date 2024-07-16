@@ -6,6 +6,7 @@ use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ModifiedResourceResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Drupal\file\Entity\File;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -57,7 +58,11 @@ class ContractCancelDownloadResource extends ResourceBase
 
         // Check if the file exists
         if (file_exists($file_real_path)) {
-          return new BinaryFileResponse($file_real_path);
+          $response = new BinaryFileResponse($file_real_path);
+          $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, 'Kündigung.pdf');
+          $response->headers->set('Content-Type', 'application/pdf');
+
+          return $response;
         } else {
           return new ModifiedResourceResponse([
             'message' => $this->t('File not found.'),
