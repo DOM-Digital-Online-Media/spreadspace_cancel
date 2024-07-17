@@ -228,10 +228,11 @@ class ContractCancelResource extends ResourceBase {
       ], 500);
     }
 
-    // Generate and store the user agent hash.
-    $user_agent = \Drupal::request()->headers->get('User-Agent');
-    $user_agent_hash = hash('sha256', $user_agent);
+    // Generate and store the IP address hash.
+    $request = \Drupal::request();
+    $ip_address = $request->getClientIp();
     $timestamp = time();
+    $ip_hash = hash('sha256', $ip_address . $timestamp);
 
     if ($this->client == 'share') {
       $build = [
@@ -277,7 +278,7 @@ class ContractCancelResource extends ResourceBase {
         // Insert data into custom_module_user_agents table
         \Drupal::database()->insert('spreadspace_cancel_user_agents')
         ->fields([
-          'user_agent_hash' => $user_agent_hash,
+          'user_agent_hash' => $ip_hash,
           'request_data' => serialize($data),
           'created' => $timestamp,
           'file_path' => $pdf_uuid
@@ -346,7 +347,7 @@ class ContractCancelResource extends ResourceBase {
       $full_url = $url->toString();
 
       $response = [
-        'url' => $full_url . '?_format=json',
+        'url' => $full_url . '?id=' . $ip_hash . '&_format=json',
       ];
     }
 

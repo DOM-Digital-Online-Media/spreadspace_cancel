@@ -31,8 +31,8 @@ class ContractCancelDownloadResource extends ResourceBase
       ], 400);
     }
 
-    $user_agent = $request->headers->get('User-Agent');
-    $user_agent_hash = hash('sha256', $user_agent);
+    $ip_address = $request->getClientIp();
+    $ip_hash = hash('sha256', $ip_address);
 
     // Load the file entity using the UUID
     $files = \Drupal::entityTypeManager()->getStorage('file')->loadByProperties(['uuid' => $uuid]);
@@ -43,7 +43,7 @@ class ContractCancelDownloadResource extends ResourceBase
       $file_path = $file->getFileUri();
       $result = \Drupal::database()->select('spreadspace_cancel_user_agents', 'c')
         ->fields('c', ['user_agent_hash', 'file_path'])
-        ->condition('user_agent_hash', $user_agent_hash)
+        ->condition('user_agent_hash', $ip_hash)
         ->condition('file_path', $uuid)
         ->orderBy('created', 'DESC')
         ->range(0, 1)

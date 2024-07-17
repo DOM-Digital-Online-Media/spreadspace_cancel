@@ -82,6 +82,12 @@ function spreadspace_cancel_cron() {
       \Drupal::service('file_system')->rmdir($dir_uri);
     }
 
+    // Remove entries from the spreadspace_cancel_user_agents table older than 10 minutes.
+    $connection = \Drupal::database();
+    $connection->delete('spreadspace_cancel_user_agents')
+    ->condition('created', $request_time - $interval, '<')
+      ->execute();
+
     \Drupal::state()->set(SPREADSPACE_CANCEL_FILES_STATE, array_diff($fids, $files));
     \Drupal::state()->set('spreadspace_cancel_file_cron', $request_time);
   }
