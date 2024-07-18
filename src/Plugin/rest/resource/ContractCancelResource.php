@@ -232,7 +232,7 @@ class ContractCancelResource extends ResourceBase {
     $request = \Drupal::request();
     $ip_address = $request->getClientIp();
     $timestamp = time();
-    $ip_hash = hash('sha256', $ip_address . $timestamp);
+    $ip_hash = hash('sha256', $ip_address);
 
     if ($this->client == 'share') {
       $build = [
