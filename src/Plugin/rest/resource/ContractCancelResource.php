@@ -297,8 +297,14 @@ class ContractCancelResource extends ResourceBase {
       }
 
       // Send 2 emails to user and other email specified in configs.
+
+      // Read file content from private directory
+      $file_path = $pdf->getFileUri();
+      $file_real_path = \Drupal::service('file_system')->realpath($file_path);
+      $file_content = file_get_contents($file_real_path);
+
       $attachment = [
-        'filepath' => $pdf->getFileUri(),
+        'filecontent' => base64_encode($file_content),
         'filename' => $pdf->getFilename(),
         'filemime' => $pdf->getMimeType(),
       ];
