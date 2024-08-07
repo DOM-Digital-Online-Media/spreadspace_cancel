@@ -300,13 +300,40 @@ class ContractCancelResource extends ResourceBase {
 
       // Read file content from private directory
       $file_path = $pdf->getFileUri();
-      $file_real_path = \Drupal::service('file_system')->realpath($file_path);
-      $file_content = file_get_contents($file_real_path);
+
+      // Define the temporary directory
+      $base_temp_dir = 'public://temp/pdf';
+
+      // Ensure the directory exists
+      \Drupal::service('file_system')->prepareDirectory($base_temp_dir, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY | \Drupal\Core\File\FileSystemInterface::MODIFY_PERMISSIONS);
+
+      // Create a temporary subdirectory with a random name
+      $temp_subdir = \Drupal::service('file_system')->tempnam($base_temp_dir, 'temp_subdir_');
+      unlink($temp_subdir); // tempnam creates a file, so remove it to create a directory
+      mkdir($temp_subdir);
+
+      // Ensure the temporary subdirectory exists
+      \Drupal::service('file_system')->prepareDirectory($temp_subdir, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY | \Drupal\Core\File\FileSystemInterface::MODIFY_PERMISSIONS);
+
+      // Get the real path of the PDF
+      $real_pdf_path = \Drupal::service('file_system')->realpath($file_path);
+
+      // Define the temporary file path in the temporary subdirectory
+      $temp_file_path = $temp_subdir . '/' . basename($file_path);
+      $real_temp_file_path = \Drupal::service('file_system')->realpath($temp_file_path);
+
+      // Copy the PDF to the temporary location
+      if (!copy($real_pdf_path, $real_temp_file_path)) {
+        throw new \Exception('Failed to create a temporary copy of the PDF file.');
+      }
+
+      $temp_file_name = basename($real_temp_file_path);
+      $temp_file_mime = mime_content_type($real_temp_file_path);
 
       $attachment = [
-        'filecontent' => base64_encode($file_content),
-        'filename' => $pdf->getFilename(),
-        'filemime' => $pdf->getMimeType(),
+        'filepath' => $real_temp_file_path,
+        'filename' => $temp_file_name,
+        'filemime' => $temp_file_mime,
       ];
 
       $body = '';
@@ -347,6 +374,16 @@ class ContractCancelResource extends ResourceBase {
           'sender_name' => $this->getConfig('email_from_name'),
           'body' => $body,
         ]);
+
+      // Delete the temporary file
+      if (file_exists($real_temp_file_path)) {
+        unlink($real_temp_file_path);
+      }
+
+      // Delete the temporary subdirectory
+      if (is_dir($temp_subdir)) {
+        rmdir($temp_subdir);
+      }
 
       // Generate the full URL
       $url = Url::fromRoute('spreadspace_cancel.contract_download', ['uuid' => $pdf_uuid], ['absolute' => TRUE]);
