@@ -1,0 +1,4 @@
+services:
+  spreadspace_cancel.mailer:
+    class: Drupal\spreadspace_cancel\SpreadspaceCancelMailer
+    arguments: ['@plugin.manager.mail']

@@ -359,21 +359,47 @@ class ContractCancelResource extends ResourceBase {
         }
       }
 
-      $this->mailManager
-        ->mail('spreadspace_cancel', 'contract_cancel_customer', $data['email address'], 'en', [
-          'attachments' => [$attachment],
-          'sender' => $this->getConfig('email_from'),
-          'sender_name' => $this->getConfig('email_from_name'),
-          'body' => $this->getConfig('email_body'),
-        ]);
-      $this->mailManager
-        ->mail('spreadspace_cancel', 'contract_cancel_client', $this->getConfig('email'), 'en', [
-          'attachments' => [$attachment],
-          'customer_id' => in_array($data['client'], ['norma', 'kaufland']) ? $data['mobile phone number'] : $data['customer ID'],
-          'sender' => $this->getConfig('email_from'),
-          'sender_name' => $this->getConfig('email_from_name'),
-          'body' => $body,
-        ]);
+      $custom_mailer = \Drupal::service('spreadspace_cancel.mailer');
+      $smtp_credentials = [
+        'smtp_username' => $this->getConfig('smtp_username'),
+        'smtp_password' => $this->getConfig('smtp_password'),
+        'smtp_server' => $this->getConfig('smtp_server'),
+        'smtp_port' => $this->getConfig('smtp_port'),
+        'smtp_encryption' => $this->getConfig('smtp_encryption')
+      ];
+
+      $additional_params_customer = [
+        'attachments' => [$attachment],
+        'sender_name' => $this->getConfig('email_from_name'),
+        'mail_key' => 'contract_cancel_customer',
+      ];
+
+      // Send email to customer.
+      $custom_mailer->sendEmail(
+        $this->getConfig('email_from'),
+        $data['email address'],
+        'Subject for customer',
+        $this->getConfig('email_body'),
+        $smtp_credentials,
+        $additional_params_customer
+      );
+
+      $additional_params_client = [
+        'attachments' => [$attachment],
+        'customer_id' => in_array($data['client'], ['norma', 'kaufland']) ? $data['mobile phone number'] : $data['customer ID'],
+        'sender_name' => $this->getConfig('email_from_name'),
+        'mail_key' => 'contract_cancel_client',
+      ];
+
+      // Send email to client.
+      $custom_mailer->sendEmail(
+        $this->getConfig('email_from'),
+        $this->getConfig('email'),
+        'Subject for client',
+        $body,
+        $smtp_credentials,
+        $additional_params_client
+      );
 
       // Delete the temporary file
       if (file_exists($real_temp_file_path)) {
