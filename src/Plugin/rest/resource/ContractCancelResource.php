@@ -378,7 +378,7 @@ class ContractCancelResource extends ResourceBase {
       $custom_mailer->sendEmail(
         $this->getConfig('email_from'),
         $data['email address'],
-        'Subject for customer',
+        'Eingang ihrer Kündigung',
         $this->getConfig('email_body'),
         $smtp_credentials,
         $additional_params_customer
@@ -395,7 +395,7 @@ class ContractCancelResource extends ResourceBase {
       $custom_mailer->sendEmail(
         $this->getConfig('email_from'),
         $this->getConfig('email'),
-        'Subject for client',
+        in_array($data['client'], ['norma', 'kaufland']) ? 'Kündigung Mobilnummer' : 'Kündigung Kundennummer',
         $body,
         $smtp_credentials,
         $additional_params_client
