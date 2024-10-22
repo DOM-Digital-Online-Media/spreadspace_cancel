@@ -54,12 +54,12 @@ class ContractCancelResource extends ResourceBase {
   /**
    * Maximum amount of requests for user per window.
    */
-  const FLOOD_THRESHOLD = 5;
+  const FLOOD_THRESHOLD = 1;
 
   /**
    * Keep track of requests for this long.
    */
-  const FLOOD_WINDOW = 60 * 60 * 24;
+  const FLOOD_WINDOW = 60 * 5;
 
   /**
    * Font used in generated pdf.
@@ -374,15 +374,17 @@ class ContractCancelResource extends ResourceBase {
         'mail_key' => 'contract_cancel_customer',
       ];
 
-      // Send email to customer.
-      $custom_mailer->sendEmail(
-        $this->getConfig('email_from'),
-        $data['email address'],
-        'Eingang ihrer Kündigung',
-        $this->getConfig('email_body'),
-        $smtp_credentials,
-        $additional_params_customer
-      );
+      if ($disable_flood_protection || (!$disable_flood_protection && $this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW))) {
+        // Send email to customer.
+        $custom_mailer->sendEmail(
+          $this->getConfig('email_from'),
+          $data['email address'],
+          'Eingang ihrer Kündigung',
+          $this->getConfig('email_body'),
+          $smtp_credentials,
+          $additional_params_customer
+        );
+      }
 
       $additional_params_client = [
         'attachments' => [$attachment],
@@ -391,15 +393,17 @@ class ContractCancelResource extends ResourceBase {
         'mail_key' => 'contract_cancel_client',
       ];
 
-      // Send email to client.
-      $custom_mailer->sendEmail(
-        $this->getConfig('email_from'),
-        $this->getConfig('email'),
-        in_array($data['client'], ['norma', 'kaufland']) ? 'Kündigung Mobilnummer' : 'Kündigung Kundennummer',
-        $body,
-        $smtp_credentials,
-        $additional_params_client
-      );
+      if ($disable_flood_protection || (!$disable_flood_protection && $this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW))) {
+        // Send email to client.
+        $custom_mailer->sendEmail(
+          $this->getConfig('email_from'),
+          $this->getConfig('email'),
+          in_array($data['client'], ['norma', 'kaufland']) ? 'Kündigung Mobilnummer' : 'Kündigung Kundennummer',
+          $body,
+          $smtp_credentials,
+          $additional_params_client
+        );
+      }
 
       // Delete the temporary file
       if (file_exists($real_temp_file_path)) {
@@ -463,11 +467,11 @@ class ContractCancelResource extends ResourceBase {
       throw new BadRequestHttpException($this->t('At least one of those fields "customer ID" or "sim card number" must be present in the request.'));
     }
 
-    $disable_flood_protection = $this->getConfig('disable_flood_protection') ?? FALSE;
+    #$disable_flood_protection = $this->getConfig('disable_flood_protection') ?? FALSE;
 
-    if (!$disable_flood_protection && !$this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW)) {
-      throw new BadRequestHttpException($this->t('Too much requests.'));
-    }
+    #if (!$disable_flood_protection && !$this->flood->isAllowed($this->getPluginId(), self::FLOOD_THRESHOLD, self::FLOOD_WINDOW)) {
+    #  throw new BadRequestHttpException($this->t('Too much requests.'));
+    #}
   }
 
   /**
