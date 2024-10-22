@@ -218,7 +218,7 @@ class ContractCancelResource extends ResourceBase {
   public function post($data) {
     // Get client from request if set.
     $this->client = $data['client'] ?? '';
-
+    $disable_flood_protection = $this->getConfig('disable_flood_protection') ?? FALSE;
     $this->validate($data);
 
     // Abort if configuration is not yet set.
