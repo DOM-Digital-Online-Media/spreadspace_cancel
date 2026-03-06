@@ -240,14 +240,14 @@ class ContractCancelResource extends ResourceBase {
         '#data' => $data,
       ];
 
-      $message_body = \Drupal::service('renderer')->renderPlain($build);
+      $message_body = \Drupal::service('renderer')->renderInIsolation($build);
 
       $build = [
         '#theme' => 'spreadspace_cancel_share_email_service_center',
         '#data' => $data,
       ];
 
-      $service_center_body = \Drupal::service('renderer')->renderPlain($build);
+      $service_center_body = \Drupal::service('renderer')->renderInIsolation($build);
 
       $this->mailManager
         ->mail('spreadspace_cancel', 'share_contract_cancel_customer', $data['email address'], 'en', [
