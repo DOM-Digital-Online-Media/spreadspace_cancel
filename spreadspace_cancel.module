@@ -72,6 +72,7 @@ function spreadspace_cancel_cron() {
     $file_storage = \Drupal::entityTypeManager()->getStorage('file');
     $files = $file_storage
       ->getQuery()
+      ->accessCheck()
       ->condition('fid', $fids, 'IN')
       ->condition('created', $request_time - $interval, '<')
       ->execute();
